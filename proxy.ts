@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Better-auth middleware - check session cookie
-export default async function middleware(req: NextRequest) {
+// Better-auth proxy - check session cookie
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
   
   // Public routes
   const publicRoutes = ["/", "/auth", "/api/auth"]
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
 
-  // Skip middleware for public routes and static files
+  // Skip proxy for public routes and static files
   if (isPublicRoute) {
     return NextResponse.next()
   }
@@ -40,3 +40,4 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)",
   ],
 }
+
