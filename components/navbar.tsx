@@ -87,7 +87,7 @@ export function Navbar() {
                 <path d="M8 5v14l11-7z" />
               </svg>
             </div>
-            <span>PhewTube</span>
+            <span>QTube</span>
           </a>
         </div>
 
