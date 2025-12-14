@@ -43,4 +43,11 @@ next-env.d.ts
 # cursor
 .cursor
 
+# IDE
+.vscode
+
+# project directories
+public/
+scripts/
+
 /app/generated/prisma
