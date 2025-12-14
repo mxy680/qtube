@@ -14,10 +14,40 @@ import { PrismaClient } from "../app/generated/prisma/client"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
 import * as readline from "readline"
+import { readFileSync } from "fs"
+import { join } from "path"
+
+// Load environment variables from .env.local or .env
+function loadEnv() {
+  const envFiles = [".env.local", ".env"]
+  for (const file of envFiles) {
+    try {
+      const envPath = join(process.cwd(), file)
+      const envContent = readFileSync(envPath, "utf-8")
+      envContent.split("\n").forEach((line) => {
+        const match = line.match(/^([^=:#]+)=(.*)$/)
+        if (match) {
+          const key = match[1].trim()
+          const value = match[2].trim().replace(/^["']|["']$/g, "")
+          if (!process.env[key]) {
+            process.env[key] = value
+          }
+        }
+      })
+      break
+    } catch (error) {
+      // File doesn't exist, continue to next
+    }
+  }
+}
+
+// Load environment variables
+loadEnv()
 
 const connectionString = process.env.DATABASE_URL
 if (!connectionString) {
   console.error("❌ DATABASE_URL environment variable is not set")
+  console.error("   Make sure you have a .env.local or .env file with DATABASE_URL")
   process.exit(1)
 }
 
