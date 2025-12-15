@@ -163,11 +163,8 @@ export function VoiceAssistant({ videoId, videoTitle }: VoiceAssistantProps) {
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-4 p-6">
-      <div className="text-center space-y-2">
+      <div className="text-center">
         <h3 className="text-sm font-normal text-foreground">Ask a Question</h3>
-        <p className="text-xs font-light text-muted-foreground">
-          Hold the button and speak your question
-        </p>
       </div>
 
       <button
