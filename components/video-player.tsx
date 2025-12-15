@@ -12,29 +12,18 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
   const [isPaused, setIsPaused] = useState(false)
   const qKeyPressedRef = useRef(false)
 
-  // Load YouTube IFrame API
-  useEffect(() => {
-    // Check if script is already loaded
-    if (window.YT && window.YT.Player) {
-      return
-    }
-
-    const tag = document.createElement("script")
-    tag.src = "https://www.youtube.com/iframe_api"
-    const firstScriptTag = document.getElementsByTagName("script")[0]
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
-
-    // Initialize player when API is ready
-    ;(window as any).onYouTubeIframeAPIReady = () => {
-      // Player will be initialized when iframe is ready
-    }
-  }, [])
-
   // Handle Q key press/release
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only trigger if Q key is pressed (case insensitive)
-      if (e.key.toLowerCase() === "q" && !qKeyPressedRef.current) {
+      // Ignore if user is typing in an input field
+      if (
+        e.key.toLowerCase() === "q" &&
+        !qKeyPressedRef.current &&
+        (e.target as HTMLElement)?.tagName !== "INPUT" &&
+        (e.target as HTMLElement)?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault()
         qKeyPressedRef.current = true
         pauseVideo()
       }
@@ -43,8 +32,7 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "q" && qKeyPressedRef.current) {
         qKeyPressedRef.current = false
-        // Optionally resume video when Q is released
-        // resumeVideo()
+        setIsPaused(false)
       }
     }
 
@@ -59,40 +47,17 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
 
   const pauseVideo = () => {
     if (iframeRef.current) {
-      // Use YouTube IFrame API to pause
+      // Use postMessage to control YouTube iframe
       const iframe = iframeRef.current
-      const player = (iframe as any).playerInstance
-
-      if (player && typeof player.pauseVideo === "function") {
-        player.pauseVideo()
-        setIsPaused(true)
-      } else {
-        // Fallback: send postMessage to iframe
-        iframe.contentWindow?.postMessage(
-          JSON.stringify({
-            event: "command",
-            func: "pauseVideo",
-            args: [],
-          }),
-          "https://www.youtube.com"
-        )
-        setIsPaused(true)
-      }
-    }
-  }
-
-  // Initialize YouTube player when iframe loads
-  const handleIframeLoad = () => {
-    if (window.YT && window.YT.Player && iframeRef.current) {
-      const player = new window.YT.Player(iframeRef.current, {
-        events: {
-          onReady: () => {
-            // Player is ready
-          },
-        },
-      })
-      // Store player instance on iframe for later access
-      ;(iframeRef.current as any).playerInstance = player
+      iframe.contentWindow?.postMessage(
+        JSON.stringify({
+          event: "command",
+          func: "pauseVideo",
+          args: [],
+        }),
+        "https://www.youtube.com"
+      )
+      setIsPaused(true)
     }
   }
 
@@ -105,24 +70,15 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowFullScreen
         className="w-full h-full"
-        onLoad={handleIframeLoad}
       />
       {isPaused && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/50 rounded-lg px-4 py-2 text-white text-sm font-light">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-black/70 rounded-lg px-4 py-2 text-white text-sm font-light">
             Video paused (holding Q)
           </div>
         </div>
       )}
     </div>
   )
-}
-
-// Extend Window interface for TypeScript
-declare global {
-  interface Window {
-    YT: any
-    onYouTubeIframeAPIReady: () => void
-  }
 }
 
