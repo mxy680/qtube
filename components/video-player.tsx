@@ -9,8 +9,18 @@ interface VideoPlayerProps {
 
 declare global {
   interface Window {
-    YT: any
-    onYouTubeIframeAPIReady: () => void
+    YT: {
+      Player: new (elementId: string | HTMLElement, config: any) => any
+      PlayerState: {
+        UNSTARTED: number
+        ENDED: number
+        PLAYING: number
+        PAUSED: number
+        BUFFERING: number
+        CUED: number
+      }
+    }
+    onYouTubeIframeAPIReady: (() => void) | undefined
   }
 }
 
@@ -20,66 +30,116 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
   const [isPaused, setIsPaused] = useState(false)
   const qKeyPressedRef = useRef(false)
   const [playerReady, setPlayerReady] = useState(false)
+  const apiReadyRef = useRef(false)
 
   // Load YouTube IFrame API
   useEffect(() => {
+    // Check if API is already loaded
     if (window.YT && window.YT.Player) {
-      initializePlayer()
+      apiReadyRef.current = true
+      // Small delay to ensure container is mounted
+      setTimeout(() => initializePlayer(), 100)
       return
     }
 
+    // Check if script is already being loaded
+    if (document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      // Script is loading, wait for it
+      const checkInterval = setInterval(() => {
+        if (window.YT && window.YT.Player) {
+          clearInterval(checkInterval)
+          apiReadyRef.current = true
+          setTimeout(() => initializePlayer(), 100)
+        }
+      }, 100)
+      return () => clearInterval(checkInterval)
+    }
+
+    // Load the script
     const tag = document.createElement("script")
     tag.src = "https://www.youtube.com/iframe_api"
+    tag.async = true
     const firstScriptTag = document.getElementsByTagName("script")[0]
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag)
 
+    // Set up callback
     window.onYouTubeIframeAPIReady = () => {
-      initializePlayer()
+      apiReadyRef.current = true
+      console.log("YouTube IFrame API ready")
+      setTimeout(() => initializePlayer(), 100)
     }
   }, [])
 
-  const initializePlayer = () => {
-    if (!containerRef.current || playerRef.current) return
+  // Initialize player when container and API are ready
+  const initializePlayer = useCallback(() => {
+    if (!containerRef.current || playerRef.current || !apiReadyRef.current) {
+      console.log("Cannot initialize:", {
+        hasContainer: !!containerRef.current,
+        hasPlayer: !!playerRef.current,
+        apiReady: apiReadyRef.current,
+      })
+      return
+    }
 
     try {
+      console.log("Initializing YouTube player with video ID:", youtubeVideoId)
       const player = new window.YT.Player(containerRef.current, {
         videoId: youtubeVideoId,
+        width: "100%",
+        height: "100%",
         playerVars: {
           rel: 0,
           enablejsapi: 1,
+          playsinline: 1,
         },
         events: {
-          onReady: () => {
+          onReady: (event: any) => {
             setPlayerReady(true)
-            console.log("YouTube player ready")
+            console.log("YouTube player ready, can pause:", typeof event.target.pauseVideo === "function")
           },
           onStateChange: (event: any) => {
-            // Track pause state
             if (event.data === window.YT.PlayerState.PAUSED) {
               setIsPaused(true)
             } else if (event.data === window.YT.PlayerState.PLAYING) {
               setIsPaused(false)
             }
           },
+          onError: (event: any) => {
+            console.error("YouTube player error:", event.data)
+          },
         },
       })
       playerRef.current = player
+      console.log("Player instance created")
     } catch (error) {
       console.error("Error initializing YouTube player:", error)
     }
-  }
+  }, [youtubeVideoId])
+
+  // Re-initialize if video ID changes
+  useEffect(() => {
+    if (apiReadyRef.current && containerRef.current && !playerRef.current) {
+      initializePlayer()
+    }
+  }, [youtubeVideoId, initializePlayer])
 
   const pauseVideo = useCallback(() => {
-    if (playerRef.current && playerReady) {
-      try {
-        playerRef.current.pauseVideo()
-        setIsPaused(true)
-        console.log("Video paused via Q key")
-      } catch (error) {
-        console.error("Error pausing video:", error)
-      }
-    } else {
+    if (!playerRef.current) {
+      console.log("No player instance")
+      return
+    }
+    if (!playerReady) {
       console.log("Player not ready yet")
+      return
+    }
+
+    try {
+      console.log("Attempting to pause video")
+      playerRef.current.pauseVideo()
+      setIsPaused(true)
+      console.log("Pause command sent successfully")
+    } catch (error) {
+      console.error("Error pausing video:", error)
     }
   }, [playerReady])
 
@@ -103,7 +163,6 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "q" && qKeyPressedRef.current) {
         qKeyPressedRef.current = false
-        // Keep paused state - don't auto-resume
       }
     }
 
@@ -118,7 +177,11 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
 
   return (
     <div className="aspect-video w-full rounded-lg overflow-hidden bg-black relative">
-      <div ref={containerRef} className="w-full h-full" />
+      <div
+        ref={containerRef}
+        id={`youtube-player-${youtubeVideoId}`}
+        className="w-full h-full"
+      />
       {isPaused && qKeyPressedRef.current && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="bg-black/70 rounded-lg px-4 py-2 text-white text-sm font-light">
