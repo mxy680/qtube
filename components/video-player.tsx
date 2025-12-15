@@ -151,23 +151,25 @@ export function VideoPlayer({ youtubeVideoId, title }: VideoPlayerProps) {
       />
       {/* Microphone button - only show in fullscreen */}
       {isFullscreen && (
-        <button
-          onClick={handleMicClick}
-          className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-colors z-50 shadow-lg"
-          aria-label="Voice input"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="1.5"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div className="fixed top-4 right-4 z-[9999] pointer-events-auto">
+          <button
+            onClick={handleMicClick}
+            className="bg-black/80 hover:bg-black text-white p-3 rounded-full transition-colors shadow-lg backdrop-blur-sm"
+            aria-label="Voice input"
           >
-            <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </button>
+        </div>
       )}
     </div>
   )
