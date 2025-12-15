@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
-import { FullscreenVideoPlayer } from "@/components/fullscreen-video-player"
+import { VideoPlayer } from "@/components/video-player"
 import { prisma } from "@/lib/prisma"
 
 /**
@@ -131,11 +131,7 @@ export default async function WatchPage({ params }: WatchPageProps) {
             <div className="lg:col-span-2">
               {youtubeVideoId ? (
                 <div className="mb-4">
-                  <FullscreenVideoPlayer
-                    youtubeVideoId={youtubeVideoId}
-                    title={video.title}
-                    videoId={video.id}
-                  />
+                  <VideoPlayer youtubeVideoId={youtubeVideoId} title={video.title} />
                 </div>
               ) : (
                 <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted flex items-center justify-center mb-4">
