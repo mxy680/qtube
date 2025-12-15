@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { Navbar } from "@/components/navbar"
-import { VideoPlayer } from "@/components/video-player"
+import { VoiceAssistant } from "@/components/voice-assistant"
 import { prisma } from "@/lib/prisma"
 
 /**
@@ -129,15 +129,27 @@ export default async function WatchPage({ params }: WatchPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Video Player Section */}
             <div className="lg:col-span-2">
-              {youtubeVideoId ? (
-                <div className="mb-4">
-                  <VideoPlayer youtubeVideoId={youtubeVideoId} title={video.title} />
+              <div className="flex gap-4 mb-4">
+                {youtubeVideoId ? (
+                  <div className="flex-1 aspect-video rounded-lg overflow-hidden bg-black">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${youtubeVideoId}?rel=0`}
+                      title={video.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; web-share"
+                      className="w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1 aspect-video rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                    <p className="text-muted-foreground">Video not available</p>
+                  </div>
+                )}
+
+                {/* Voice Assistant */}
+                <div className="w-64 rounded-lg border border-gray-200 bg-background">
+                  <VoiceAssistant videoId={id} videoTitle={video.title} />
                 </div>
-              ) : (
-                <div className="aspect-video w-full rounded-lg overflow-hidden bg-muted flex items-center justify-center mb-4">
-                  <p className="text-muted-foreground">Video not available</p>
-                </div>
-              )}
+              </div>
 
               {/* Video Info */}
               <div className="space-y-3">
