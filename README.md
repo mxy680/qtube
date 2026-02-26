@@ -1,104 +1,159 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QTube
+
+A full-stack YouTube-style video platform with AI-powered transcription, voice assistant support, and social features. Built with Next.js, Supabase, and OpenAI.
+
+## Features
+
+- 🎬 **Video hosting** — Browse, watch, and manage videos with channel organization
+- 🤖 **AI transcription** — Automatic speech-to-text via OpenAI Whisper, with timestamped segments
+- 🎙️ **Voice assistant** — Voice-powered search and interaction
+- 📺 **YouTube integration** — Import YouTube channel avatars and video metadata via YouTube Data API
+- 👤 **User profiles** — Supabase-authenticated accounts with customizable profiles
+- ❤️ **Social features** — Likes and comments on videos
+- 🗂️ **Categories** — Organize content by topic
+- 🔐 **Auth** — Email/password + OAuth (Google, GitHub, etc.) via Supabase
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Auth & Storage | Supabase |
+| ORM | Prisma 7 (PostgreSQL) |
+| AI | OpenAI (Whisper API) |
+| YouTube | YouTube Data API v3 |
+| Styling | Tailwind CSS v4 + shadcn/ui |
+| Package Manager | pnpm |
 
 ## Getting Started
 
 ### Prerequisites
 
-1. Node.js 18+ installed
-2. A Supabase account and project ([Create one here](https://supabase.com))
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- A [Supabase](https://supabase.com) project
+- A [Google Cloud](https://console.cloud.google.com) project with YouTube Data API v3 enabled
+- An [OpenAI](https://platform.openai.com) API key
 
-### Setup
+### Installation
 
-1. **Install dependencies:**
+1. **Clone the repository:**
+```bash
+git clone https://github.com/mxy680/qtube.git
+cd qtube
+```
+
+2. **Install dependencies:**
 ```bash
 pnpm install
 ```
 
-2. **Set up Supabase:**
-   - Create a new project at [supabase.com](https://supabase.com)
-   - Go to Project Settings > API
-   - Copy your Project URL and anon/public key
-
 3. **Set up environment variables:**
-Create a `.env.local` file in the root directory:
-```bash
+
+Create a `.env.local` file in the root:
+```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Optional: For server-side operations
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# YouTube Data API (required for channel avatars)
-# Get your API key from: https://console.cloud.google.com/apis/credentials
-# Enable YouTube Data API v3 in your Google Cloud project
+# YouTube Data API v3
+# https://console.cloud.google.com/apis/credentials
 YOUTUBE_API_KEY=your-youtube-api-key
 
-# OpenAI API (required for voice assistant transcription)
-# Get your API key from: https://platform.openai.com/api-keys
-# The voice assistant uses Whisper API for speech-to-text transcription
+# OpenAI (Whisper for transcription)
+# https://platform.openai.com/api-keys
 OPENAI_API_KEY=your-openai-api-key
+
+# Database (PostgreSQL via Supabase)
+DATABASE_URL=your-database-url
 ```
 
-4. **Configure Supabase Auth:**
-   - In your Supabase dashboard, go to Authentication > Providers
-   - Enable the providers you want (Email, Google, GitHub, etc.)
-   - For OAuth providers, add your redirect URLs:
+4. **Set up Supabase Auth:**
+   - Dashboard → Authentication → Providers → enable Email, Google, GitHub, etc.
+   - Add redirect URLs:
      - `http://localhost:3000/auth/callback` (development)
      - `https://yourdomain.com/auth/callback` (production)
 
-5. **Set up database (optional - if using Prisma):**
+5. **Run database migrations:**
 ```bash
-# If you want to use Prisma with Supabase
 npx prisma migrate dev
 npx prisma generate
 ```
 
-6. **Start the development server:**
+6. **Start the dev server:**
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000).
 
-### Authentication
+## Project Structure
 
-This project uses Supabase Auth for authentication. Features include:
-- Email/password authentication
-- OAuth providers (Google, GitHub, etc.)
-- Session management with automatic token refresh
-- Protected routes via middleware
+```
+qtube/
+├── app/                    # Next.js App Router
+│   ├── api/                # API route handlers
+│   ├── auth/               # Auth pages (sign in, sign up, callback)
+│   ├── watch/              # Video watch page
+│   ├── layout.tsx
+│   └── page.tsx            # Home feed
+├── components/             # Reusable React components
+├── hooks/                  # Custom React hooks
+├── lib/                    # Utilities and service clients
+│   ├── supabase/           # Supabase client config
+│   ├── auth.ts             # Server-side auth helpers
+│   └── auth-client.ts      # Client-side auth hooks
+├── prisma/
+│   ├── schema.prisma       # Database schema
+│   └── migrations/         # Migration history
+├── scripts/                # Utility scripts
+├── types/                  # TypeScript type definitions
+├── utils/                  # Shared utilities
+└── proxy.ts                # Dev proxy config
+```
 
-**Auth Routes:**
-- `/auth/signin` - Sign in page
-- `/auth/signup` - Sign up page
-- `/auth/callback` - OAuth callback handler
+## Database Schema
 
-### Project Structure
+| Model | Description |
+|-------|-------------|
+| `Profile` | User profiles extending Supabase Auth |
+| `Channel` | Video channels (user-created or YouTube-imported) |
+| `Video` | Videos with transcripts, segments, and metadata |
+| `Category` | Content categories |
+| `Like` | User likes on videos |
+| `Comment` | Comments on videos |
 
-- `app/` - Next.js App Router pages and API routes
-- `app/auth/` - Authentication pages (sign in, sign up)
-- `lib/` - Utility functions
-  - `lib/supabase/` - Supabase client configuration
-  - `lib/auth.ts` - Server-side auth helpers
-  - `lib/auth-client.ts` - Client-side auth hooks
-- `middleware.ts` - Session refresh middleware
-- `prisma/` - Database schema and migrations (optional)
-- `components/` - React components
+## Auth Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Description |
+|-------|-------------|
+| `/auth/signin` | Sign in page |
+| `/auth/signup` | Sign up page |
+| `/auth/callback` | OAuth callback handler |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm dev              # Start development server
+pnpm build            # Build for production (runs prisma generate first)
+pnpm start            # Start production server
+pnpm lint             # Run ESLint
+pnpm delete-all-videos  # Utility: delete all video records
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deploy on [Vercel](https://vercel.com):
 
-## Deploy on Vercel
+1. Connect your GitHub repo to Vercel
+2. Add all environment variables from `.env.local`
+3. Set build command to `pnpm build`
+4. Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Make sure to add your production domain to Supabase's allowed redirect URLs.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
